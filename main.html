@@ -1,0 +1,129 @@
+<html>
+
+<head>
+<script src="js/three.min.js"></script>
+<script src="js/TrackballControls.js"></script>
+<script src="js/jquery-2.1.1.min.js"></script>
+<script src="js/table.js"></script>
+</head>
+
+<body>
+</body>
+
+
+<script>
+
+var scene, camera, renderer, controls;
+var geometry, material, mesh;
+
+init();
+animate();
+
+function init() {	
+
+	scene = new THREE.Scene();
+
+	camera = new THREE.PerspectiveCamera (75, window.innerWidth / window.innerHeight, 1, 10000);
+	camera.position.z = 1000;
+
+	controls = new THREE.TrackballControls( camera );	
+	controls.rotateSpeed = 1.0;
+	controls.zoomSpeed = 1.2;
+	controls.panSpeed = 0.8;
+	controls.noZoom = false;
+	controls.noPan = false;
+	controls.staticMoving = true;
+	controls.dynamicDampingFactor = 0.3;
+	controls.keys = [ 65, 83, 68 ];
+	controls.addEventListener( 'change', render );
+
+	// geometry = new THREE.BoxGeometry( 200, 200, 200 );
+	// material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true});
+
+	mesh = new THREE.Mesh( geometry, material );
+	scene.add( mesh );
+
+	addLabels(50,10);
+
+	renderer = new THREE.CanvasRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+	document.body.appendChild( renderer.domElement );
+
+	render();
+
+}
+
+function addLabels(scale, size) {
+	for (var base = 0; base < size; base++) {
+		for (var row = 0; row < size; row++) {
+			for(var column = 0; column < size; column++) {
+				var text = table[base][row][column];
+				scene.add(createLabel(text, column * scale, -row * scale, base * scale, scale / (2 * text.length), 'red', 'transparent', 1) );
+			}
+		};
+	};
+}
+
+function animate() {
+
+	requestAnimationFrame( animate );
+	controls.update();
+}
+
+function render() {
+	renderer.render( scene, camera );
+}
+
+function createLabel(text, x, y, z, size, color, backGroundColor, backgroundMargin) {
+	if(!backgroundMargin)
+		backgroundMargin = 50;
+
+	var canvas = document.createElement("canvas");
+
+	var context = canvas.getContext("2d");
+	context.font = size + "pt Arial";
+
+	var textWidth = context.measureText(text).width;
+
+	canvas.width = textWidth + backgroundMargin;
+	canvas.height = size + backgroundMargin;
+	context = canvas.getContext("2d");
+	context.font = size + "pt Arial";
+
+	if(backGroundColor) {
+		context.fillStyle = backGroundColor;
+		context.fillRect(canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, canvas.height / 2 - size / 2 - +backgroundMargin / 2, textWidth + backgroundMargin, size + backgroundMargin);
+	}
+
+	context.textAlign = "center";
+	context.textBaseline = "middle";
+	context.fillStyle = color;
+	context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+	// context.strokeStyle = "black";
+	// context.strokeRect(0, 0, canvas.width, canvas.height);
+
+	var texture = new THREE.Texture(canvas);
+	texture.needsUpdate = true;
+
+	var material = new THREE.MeshBasicMaterial({
+		map : texture
+	});
+
+	var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
+	// mesh.overdraw = true;
+	mesh.doubleSided = true;
+	mesh.position.x = x - canvas.width;
+	mesh.position.y = y - canvas.height;
+	mesh.position.z = z;
+
+	return mesh;
+}
+
+</script>
+
+
+
+
+</html>
